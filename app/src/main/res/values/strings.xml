@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Blue Sky Tweets</string>
+    <string name="login_label">Connect to Twitter</string>
+    <string name="timeline_label">Home timeline</string>
+    <string name="compose_label">Compose Tweet</string>
+    <string name="new_tweet_default">Whats happening ....</string>
+    <string name="tweet">Tweet</string>
+    <string name="cancel">Cancel</string>
+    <string name="remaining">remaining</string>
+</resources>
