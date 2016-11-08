@@ -1,42 +1,29 @@
 package com.codepath.apps.blueskytweet;
 
-import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.text.format.Time;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AbsListView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
 
+import com.astuetz.PagerSlidingTabStrip;
+import com.codepath.apps.blueskytweet.fragments.HomeTimelineFragment;
+import com.codepath.apps.blueskytweet.fragments.MentionsTimelineFragment;
 import com.codepath.apps.blueskytweet.models.Tweet;
-import com.loopj.android.http.JsonHttpResponseHandler;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import cz.msebera.android.httpclient.Header;
+import com.codepath.apps.blueskytweet.models.User;
 
 public class TimelineActivity extends AppCompatActivity {
     public static final String TAG = "Timeline";
     private static final int REQUEST_CODE = 101;
-
-    TwitterClient twitterClient;
-    TweetsArrayAdapter tweetsArrayAdapter;
-    LinkedList<Tweet> tweetArrayList;
-    ListView lvTweets;
-    TimelineFetcher timelineFetcher;
+    private HomeTimelineFragment homeTimelineFragment;
     private SwipeRefreshLayout swipeContainer;
+    private ViewPager vpPager;
 
 
     @Override
@@ -47,49 +34,24 @@ public class TimelineActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         // Sets the Toolbar to act as the ActionBar for this Activity window.
         // Make sure the toolbar exists in the activity and is not null
+
         setSupportActionBar(toolbar);
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        // Get viewpager.
+        vpPager = (ViewPager) findViewById(R.id.viewpager);
+        // set adapter for the viewpager.
+        vpPager.setAdapter(new TweetsPagerAdapter(getSupportFragmentManager()));
 
-
-        lvTweets = (ListView)findViewById(R.id.lvTweets);
-        tweetArrayList = new LinkedList<>();
-        tweetsArrayAdapter = new TweetsArrayAdapter(this, tweetArrayList);
-        lvTweets.setAdapter(tweetsArrayAdapter);
-        twitterClient = TwitterApplication.getRestClient();
-        timelineFetcher = new TimelineFetcher(this, twitterClient, tweetArrayList,
-                tweetsArrayAdapter);
-
-        lvTweets.setOnScrollListener(timelineFetcher);
-        // timelineFetcher.initialFetch();
-        //populateTimeline();
-
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                timelineFetcher.refresh(swipeContainer);
-            }
-        });
+        // Find the pager tabs.
+        PagerSlidingTabStrip tabStrip = (PagerSlidingTabStrip)findViewById(R.id.tabs);
+        tabStrip.setViewPager(vpPager);
+        // Attach the pager tabs to the view pager.
 
     }
 
-
-    // Send a REST request to fetch the timeline. Populate the ListView.
-    void populateTimeline() {
-        twitterClient.getHomeTimeline(new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-                Log.d(TAG, response.toString());
-                tweetArrayList.addAll(Tweet.fromJsonArray(response));
-                tweetsArrayAdapter.notifyDataSetChanged();
-                // De-serialize json, create model objects, load models into listview.
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable,
-                                  JSONObject errorResponse) {
-                Log.e(TAG, "Failure:" + errorResponse.toString());
-            }
-        });
+    public void onProfileView(MenuItem item) {
+        // Launch the profile view.
+        Intent i = new Intent(this, ProfileActivity.class);
+        startActivity(i);
     }
 
     @Override
@@ -99,7 +61,6 @@ public class TimelineActivity extends AppCompatActivity {
         composeItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                // Toast.makeText(TimelineActivity.this, "Compose clicked.", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(TimelineActivity.this, ComposeActivity.class);
                 startActivityForResult(intent, REQUEST_CODE);
                 return false;
@@ -113,10 +74,44 @@ public class TimelineActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Tweet tweet = data.getParcelableExtra("tweet");
-                timelineFetcher.insertFreshTweet(tweet);
+                homeTimelineFragment.insertFreshTweet(tweet);
             }
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public class TweetsPagerAdapter extends FragmentPagerAdapter {
+        String tabTitles[] = {"Home", "Mentions"};
+
+
+        public TweetsPagerAdapter(FragmentManager fragmentManager) {
+            super(fragmentManager);
+        }
+
+        // Order and creation of fragments within the pager.
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    homeTimelineFragment =  new HomeTimelineFragment();
+                    return homeTimelineFragment;
+                case 1:
+                    MentionsTimelineFragment mentionsTimelineFragment = new MentionsTimelineFragment();
+                    return mentionsTimelineFragment;
+            }
+            return null;
+        }
+
+        // How many fragments to swipe between.
+        @Override
+        public int getCount() {
+            return tabTitles.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return tabTitles[position];
+        }
     }
 }

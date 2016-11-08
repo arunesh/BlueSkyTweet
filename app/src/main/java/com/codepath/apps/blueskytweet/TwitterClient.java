@@ -9,6 +9,8 @@ import com.codepath.oauth.OAuthBaseClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
+import static android.R.attr.x;
+
 /*
  * 
  * This is the object responsible for communicating with a REST API. 
@@ -22,6 +24,7 @@ import com.loopj.android.http.RequestParams;
  * 
  */
 public class TwitterClient extends OAuthBaseClient {
+    public static final int COUNT = 10;
 	public static final Class<? extends Api> REST_API_CLASS = TwitterApi.class; // Change this
 	public static final String REST_URL = "https://api.twitter.com/1.1/"; // Change this, base API URL
 	public static final String REST_CONSUMER_KEY = "ud6tAZGbtFmoiXFFy5ULyIljU";       // Change this
@@ -32,51 +35,76 @@ public class TwitterClient extends OAuthBaseClient {
 		super(context, REST_API_CLASS, REST_URL, REST_CONSUMER_KEY, REST_CONSUMER_SECRET, REST_CALLBACK_URL);
 	}
 
-	// CHANGE THIS
-	// DEFINE METHODS for different API endpoints here. Each method is an endpoint.
-	public void getInterestingnessList(AsyncHttpResponseHandler handler) {
-		String apiUrl = getApiUrl("?nojsoncallback=1&method=flickr.interestingness.getList");
-		// Can specify query string params directly or through RequestParams.
-		RequestParams params = new RequestParams();
-		params.put("format", "json");
-		getClient().get(apiUrl, params, handler);
-	}
-
-	/* 1. Define the endpoint URL with getApiUrl and pass a relative path to the endpoint
-	 * 	  i.e getApiUrl("statuses/home_timeline.json");
-	 * 2. Define the parameters to pass to the request (query or body)
-	 *    i.e RequestParams params = new RequestParams("foo", "bar");
-	 * 3. Define the request method and make a call to the client
-	 *    i.e client.get(apiUrl, params, handler);
-	 *    i.e client.post(apiUrl, params, handler);
-	 */
-
-	public void getHomeTimeline(AsyncHttpResponseHandler handler) {
+	public synchronized  void getHomeTimeline(AsyncHttpResponseHandler handler) {
 		getHomeTimeline(handler, 1);
 	}
 
-	public void getHomeTimeline(AsyncHttpResponseHandler handler, long since_id) {
+	public synchronized void getHomeTimeline(AsyncHttpResponseHandler handler, long since_id) {
 		String apiUrl = getApiUrl("statuses/home_timeline.json");
 		RequestParams params = new RequestParams();
-		params.put("count", 25);
+		params.put("count", COUNT);
 		params.put("since_id", since_id);  // Show tweets since the very first tweet.
 		getClient().get(apiUrl, params, handler);
 	}
 
-    public void getHomeTimelineWithMaxId(AsyncHttpResponseHandler handler, long max_id) {
-        String apiUrl = getApiUrl("statuses/home_timeline.json");
-        RequestParams params = new RequestParams();
-        params.put("count", 25);
-        params.put("max_id", max_id);  // Show tweets since the very first tweet.
-        getClient().get(apiUrl, params, handler);
-    }
+	public synchronized void getMentionsTimeline(AsyncHttpResponseHandler handler) {
+		String apiUrl = getApiUrl("statuses/mentions_timeline.json");
+		RequestParams params = new RequestParams();
+		params.put("count", COUNT);
+		getClient().get(apiUrl, params, handler);
+	}
+
+	public synchronized void getMentionsTimelineWithMaxId(AsyncHttpResponseHandler handler, long max_id) {
+		String apiUrl = getApiUrl("statuses/mentions_timeline.json");
+		RequestParams params = new RequestParams();
+		params.put("count", COUNT);
+		params.put("max_id", max_id);
+		getClient().get(apiUrl, params, handler);
+	}
+
+	public synchronized void getHomeTimelineWithMaxId(AsyncHttpResponseHandler handler, long max_id) {
+		String apiUrl = getApiUrl("statuses/home_timeline.json");
+		RequestParams params = new RequestParams();
+		params.put("count", COUNT);
+		params.put("max_id", max_id);  // Show tweets since the very first tweet.
+		getClient().get(apiUrl, params, handler);
+	}
 
     // Separate method for composing a tweet.
-    public void postTweet(String body, AsyncHttpResponseHandler handler) {
+    public synchronized void postTweet(String body, AsyncHttpResponseHandler handler) {
         String apiUrl = getApiUrl("statuses/update.json");
         RequestParams params = new RequestParams();
         params.put("status", body);
         getClient().post(apiUrl, params, handler);
     }
 
+
+	public synchronized void getUserTimelineWithMaxId(String screenName, AsyncHttpResponseHandler handler, long max_id) {
+		String apiUrl = getApiUrl("statuses/user_timeline.json");
+		RequestParams params = new RequestParams();
+		params.put("count", COUNT);
+		params.put("screen_name", screenName);
+		params.put("max_id", max_id);
+		getClient().get(apiUrl, params, handler);
+	}
+
+	public synchronized void getUserTimeline(String screenName, AsyncHttpResponseHandler handler) {
+		String apiUrl = getApiUrl("statuses/user_timeline.json");
+		RequestParams params = new RequestParams();
+		params.put("count", COUNT);
+		params.put("screen_name", screenName);
+		getClient().get(apiUrl, params, handler);
+	}
+
+	public synchronized void getUserInfo(AsyncHttpResponseHandler handler) {
+		String apiUrl = getApiUrl("account/verify_credentials.json");
+		getClient().get(apiUrl, null, handler);
+	}
+
+    public synchronized void getInfoForUser(String screenName, AsyncHttpResponseHandler handler) {
+        String apiUrl = getApiUrl("users/show.json");
+        RequestParams params = new RequestParams();
+        params.put("screen_name", screenName);
+        getClient().get(apiUrl, params, handler);
+    }
 }

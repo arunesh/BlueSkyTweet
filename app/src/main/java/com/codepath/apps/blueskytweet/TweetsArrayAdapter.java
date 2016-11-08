@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.codepath.apps.blueskytweet.models.Tweet;
+import com.codepath.apps.blueskytweet.models.User;
 import com.squareup.picasso.Picasso;
 
 
@@ -23,8 +24,35 @@ import static com.codepath.apps.blueskytweet.R.id.tvUsername;
 // Turn Tweet objects into views that will be displayed in the list.
 public class TweetsArrayAdapter extends ArrayAdapter<Tweet> {
 
+    private UserProfileCallback userProfileCallback;
+
     public TweetsArrayAdapter(Context context, List<Tweet> objects) {
         super(context, android.R.layout.simple_list_item_1, objects);
+    }
+
+    public interface UserProfileCallback {
+        void userProfileClicked(User user);
+    }
+
+    private static class ProfileImageOnClickListener implements View.OnClickListener {
+        private User user;
+        private UserProfileCallback userProfileCallback;
+
+        ProfileImageOnClickListener(User user, UserProfileCallback userProfileCallback) {
+            this.user = user;
+            this.userProfileCallback = userProfileCallback;
+        }
+        @Override
+        public void onClick(View v) {
+            if (userProfileCallback != null) {
+                userProfileCallback.userProfileClicked(user);
+            }
+        }
+    }
+
+
+    public void setUserProfileCallback(UserProfileCallback userProfileCallback) {
+        this.userProfileCallback = userProfileCallback;
     }
 
     @NonNull
@@ -54,6 +82,7 @@ public class TweetsArrayAdapter extends ArrayAdapter<Tweet> {
         viewHolder.tvAgo.setText(Tweet.getRelativeTimeAgo(tweet.getCreatedAt()));
         viewHolder.tvBody.setText(tweet.getBody());
         viewHolder.ivProfileImage.setImageResource(android.R.color.transparent);  // Erase the data from the previous image.
+        viewHolder.ivProfileImage.setOnClickListener(new ProfileImageOnClickListener(tweet.getUser(), userProfileCallback));
 
         Picasso.with(getContext()).load(tweet.getUser().getProfileImageUrl()).into(viewHolder.ivProfileImage);
 

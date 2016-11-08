@@ -94,8 +94,16 @@ public class Tweet implements Parcelable {
     private static String abbreviateRelativeTimespan(String relativeTimespan) {
         String[] splitArray = relativeTimespan.split(" ");
         if (splitArray != null && splitArray.length > 2) {
-            String abbrev = splitArray[0] + splitArray[1].substring(0, 1);
-            // Log.d(TAG, "Abbrev string:" + abbrev);
+            String abbrev = "";
+            if (splitArray[0].equals("In")) {
+                //abbrev = "In " +  splitArray[1] + splitArray[2].substring(0, 1);
+                abbrev = "Just now";
+            } else if (splitArray[2].equals("ago")) {
+                abbrev = splitArray[0] + splitArray[1].substring(0, 1);
+            } else {
+                abbrev = relativeTimespan;
+            }
+            Log.d(TAG, "Abbrev string:" + abbrev + " for " + relativeTimespan);
             return abbrev;
 
         }
